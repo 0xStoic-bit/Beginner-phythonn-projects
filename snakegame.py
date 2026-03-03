@@ -24,13 +24,13 @@ SNAKE_SPEED = 500.0
 
 
 # -------------------------
-# ColorTracker (Mediapipe YERİNE)
+# ColorTracker 
 # -------------------------
 class ColorTracker:
     def __init__(self, cam_index=0):
         self.cap = cv2.VideoCapture(cam_index)
         # MAVİ RENK ARALIĞI (HSV formatında)
-        # Eğer kırmızı takip etmek istersen bu değerleri güncelleriz
+        
         self.lower_color = np.array([100, 150, 50])
         self.upper_color = np.array([140, 255, 255])
         self.latest_pos = None
@@ -72,7 +72,7 @@ class ColorTracker:
 
 
 # -------------------------
-# Yılan ve Oyun Mantığı (Öncekiyle Aynı ama Daha Hızlı)
+# Yılan ve Oyun Mantığı 
 # -------------------------
 class Snake:
     def __init__(self, space, start_pos):
@@ -136,7 +136,7 @@ class Game:
             self.snake.update(DT)
             self.space.step(DT)
 
-            # Yemek yeme kontrolü (Basit mesafe kontrolü)
+            # Yemek yeme kontrolü 
             if (self.snake.segments[0].position - self.food_pos).length < 20:
                 self.snake.add_segment(self.snake.segments[-1].position)
                 self.food_pos = Vec2d(random.randint(50, 750), random.randint(50, 550))
