@@ -1,5 +1,6 @@
-# open Cv kütüphanesi ile mevi renk cisimleri takip eden basit yılan oyunu
+ #open Cv kütüphanesi ile mavi renk cisimleri takip eden basit yılan oyunu
 
+import numpy as np
 import sys
 import cv2
 import numpy as np
@@ -26,6 +27,21 @@ SNAKE_SPEED = 500.0
 #ekran arkaplan bloğu
 
 
+def temizle_resim(path_in, path_out="elma_clean.png"):
+    img = cv2.imread(path_in, cv2.IMREAD_UNCHANGED)
+
+    # Beyaz/gri arka planı maskele
+    lower = np.array([200, 200, 200])   # alt sınır (açık gri)
+    upper = np.array([255, 255, 255])   # üst sınır (beyaz)
+    mask = cv2.inRange(img[:, :, :3], lower, upper)
+
+    # Maskelenen pikselleri şeffaf yap
+    if img.shape[2] == 3:  # alfa kanalı yoksa ekle
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+    img[mask > 0] = (0, 0, 0, 0)
+
+    cv2.imwrite(path_out, img)
+    return path_out
 
 
 # -------------------------
@@ -124,12 +140,22 @@ class Game:
         #temel properties
         self.arkaplan = pygame.image.load("arkaplan.png").convert_alpha()
         self.arkaplan = pygame.transform.smoothscale(self.arkaplan, (SCREEN_W, SCREEN_H))
+
         self.clock = pygame.time.Clock()
+
         self.space = pymunk.Space()
         self.snake = Snake(self.space, (400, 300))
+
+
+        temiz_png = temizle_resim("elma.png")
+        self.food_img = pygame.image.load(temiz_png).convert_alpha()
+        self.food_img= pygame.transform.smoothscale(self.food_img, (20, 20))
         self.food_pos = Vec2d(random.randint(50, 750), random.randint(50, 550))
+
         self.tracker = ColorTracker()
         self.running = True
+
+
 
         #font kısmı
         self.font = pygame.font.SysFont("Arial", 20)
@@ -170,11 +196,20 @@ class Game:
 
 
             # Çizim
-            pygame.draw.circle(self.screen, (255, 50, 50), (int(self.food_pos.x), int(self.food_pos.y)), 10)
+            self.screen.blit(self.food_img, (int(self.food_pos.x) - 10, int(self.food_pos.y) - 10))
+            #pygame.draw.circle(self.screen, (255, 50, 50), (int(self.food_pos.x), int(self.food_pos.y)), 10)
             self.snake.draw(self.screen)
 
-            score_text = self.font.render(f"score : {self.score}", True, (255, 255, 255))
-            self.screen.blit(score_text, (10, 10))
+            # Skor kutucuğu
+            score_text = self.font.render(f"Skor: {self.score}", True, (255, 255, 255))
+            text_rect = score_text.get_rect()
+            text_rect.topleft = (10, 10)
+
+            # Kutuyu çiz (arka plan)
+            pygame.draw.rect(self.screen, (0, 0, 0), text_rect.inflate(10, 10))  # siyah kutu
+
+            # Yazıyı kutunun üstüne bas
+            self.screen.blit(score_text, text_rect)
 
             pygame.display.flip()
             self.clock.tick(FPS)
