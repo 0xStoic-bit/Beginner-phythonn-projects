@@ -1,7 +1,4 @@
-#open Cv kütüphanesi ile mevi renk cisimleri takip eden basit yılan oyunu 
-
-
-
+# open Cv kütüphanesi ile mevi renk cisimleri takip eden basit yılan oyunu
 
 import sys
 import cv2
@@ -10,6 +7,8 @@ import pygame
 import pymunk
 import random
 from pymunk import Vec2d
+import sys
+
 
 # -------------------------
 # Ayarlar
@@ -23,14 +22,20 @@ SEGMENT_DISTANCE = 15
 SNAKE_SPEED = 500.0
 
 
+
+#ekran arkaplan bloğu
+
+
+
+
 # -------------------------
-# ColorTracker 
+# ColorTracker
 # -------------------------
 class ColorTracker:
     def __init__(self, cam_index=0):
         self.cap = cv2.VideoCapture(cam_index)
         # MAVİ RENK ARALIĞI (HSV formatında)
-        
+
         self.lower_color = np.array([100, 150, 50])
         self.upper_color = np.array([140, 255, 255])
         self.latest_pos = None
@@ -72,7 +77,7 @@ class ColorTracker:
 
 
 # -------------------------
-# Yılan ve Oyun Mantığı 
+# Yılan ve Oyun Mantığı
 # -------------------------
 class Snake:
     def __init__(self, space, start_pos):
@@ -112,7 +117,13 @@ class Snake:
 class Game:
     def __init__(self):
         pygame.init()
+        info=pygame.display.Info()
+        SCREEN_W,SCREEN_H = info.current_w, info.current_h
         self.screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+
+        #temel properties
+        self.arkaplan = pygame.image.load("arkaplan.png").convert_alpha()
+        self.arkaplan = pygame.transform.smoothscale(self.arkaplan, (SCREEN_W, SCREEN_H))
         self.clock = pygame.time.Clock()
         self.space = pymunk.Space()
         self.snake = Snake(self.space, (400, 300))
@@ -120,11 +131,26 @@ class Game:
         self.tracker = ColorTracker()
         self.running = True
 
+        #font kısmı
+        self.font = pygame.font.SysFont("Arial", 20)
+        #score ataması
+        self.score = 0
+
     def run(self):
         while self.running:
-            self.screen.fill((15, 15, 15))
+
+            #self.screen.fill((15, 15, 15))
             for event in pygame.event.get():
-                if event.type == pygame.QUIT: self.running = False
+                if event.type == pygame.QUIT:
+                    self.running = False
+                #Esc ye basarsa çıksın
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+
+
+            #Ekranı çiz
+            self.screen.blit(self.arkaplan, (0, 0))
 
             # Renk takibi ile hedefi güncelle
             pos = self.tracker.get_position()
@@ -136,14 +162,19 @@ class Game:
             self.snake.update(DT)
             self.space.step(DT)
 
-            # Yemek yeme kontrolü 
+            # Yemek yeme kontrolü
             if (self.snake.segments[0].position - self.food_pos).length < 20:
                 self.snake.add_segment(self.snake.segments[-1].position)
                 self.food_pos = Vec2d(random.randint(50, 750), random.randint(50, 550))
+                self.score += 1
+
 
             # Çizim
             pygame.draw.circle(self.screen, (255, 50, 50), (int(self.food_pos.x), int(self.food_pos.y)), 10)
             self.snake.draw(self.screen)
+
+            score_text = self.font.render(f"score : {self.score}", True, (255, 255, 255))
+            self.screen.blit(score_text, (10, 10))
 
             pygame.display.flip()
             self.clock.tick(FPS)
